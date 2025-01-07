@@ -3,7 +3,7 @@ import { FaCalendarPlus, FaHistory, FaCalendarAlt, FaClock, FaCheckCircle, FaTim
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from './Layout';
+import Sidebar from './sidebar';
 
 const calendarStyles = `
   /* Calendar Container */
