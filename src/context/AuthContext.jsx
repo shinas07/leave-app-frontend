@@ -8,10 +8,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
-  
-
-
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -41,21 +37,33 @@ export const AuthProvider = ({ children }) => {
         const { access, refresh } = response.data.tokens;
         const userEmail = response.data.user.email;
 
-           // Encrypt tokens before storing
+        // Encrypt tokens before storing
         const encryptedAccess = encryptToken(access);
         const encryptedRefresh = encryptToken(refresh);
 
-        localStorage.setItem('access_token',encryptedAccess); // Store access token in localStorage
-        localStorage.setItem('refresh_token',encryptedRefresh);
+        localStorage.setItem('access_token', encryptedAccess); // Store access token in localStorage
+        localStorage.setItem('refresh_token', encryptedRefresh);
         localStorage.setItem('user', JSON.stringify(userEmail));
         setUser(userEmail);
-        const token = localStorage.getItem('access_token')
         return { success: true };
       }
       return { success: false, error: response.data.error };
     } catch (error) {
-      console.log(error)
+      console.log(error);
       return { success: false, error: error.response?.data?.error || 'Login failed' };
+    }
+  };
+
+  const register = async (email, password, userType) => {
+    try {
+      const response = await api.post('auth/register-manager/', { email, password, userType }); // Assuming 'auth/register/' is the endpoint
+      if (response.status === 201) {
+        return { success: true };
+      }
+      return { success: false, error: response.data.error };
+    } catch (error) {
+      console.log(error);
+      return { success: false, error: error.response?.data?.error || 'Registration failed' };
     }
   };
 
@@ -67,7 +75,7 @@ export const AuthProvider = ({ children }) => {
         await api.post('auth/logout/', { refresh_token });
       }
       localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token'); 
+      localStorage.removeItem('refresh_token');
       setUser(null);
       return { success: true };
     } catch (error) {
@@ -81,13 +89,18 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
+    register,  // Added register here for use in other components
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {loading ? <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>: children}
+      {loading ? (
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 };
@@ -98,4 +111,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};
