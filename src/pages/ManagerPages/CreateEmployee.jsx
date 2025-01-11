@@ -184,7 +184,7 @@ const CreateEmployee = () => {
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 text-white"
                 >
                   <option value="employee">Employee</option>
-                  <option value="manager">Manager</option>
+                  {/* <option value="manager">Manager</option> */}
                 </select>
               </div>
             </div>
