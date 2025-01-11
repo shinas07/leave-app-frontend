@@ -4,7 +4,6 @@ import { FaUserTie, FaSignOutAlt, FaUsers, FaLock, FaEnvelope, FaArrowRight } fr
 import { Link } from 'react-router-dom';
 import {  toast } from 'sonner';
 import api from '../../service/api';
-import Cookies from 'js-cookie';
 import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
