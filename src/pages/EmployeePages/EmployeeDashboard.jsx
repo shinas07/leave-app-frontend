@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from './sidebar';
 import api from '../../service/api'; // Adjust the import based on your API setup
 import { toast } from 'sonner';
-import Cookies from 'js-cookie'; // Make sure to import js-cookie
+ // Adjust the import based on your component structure
 
 
 const EmployeeDashboard = () => {
@@ -16,7 +16,8 @@ const EmployeeDashboard = () => {
     pendingLeaves: 0,
     approvedLeaves: 0,
     rejectedLeaves: 0,
-    remainingLeaves: 0
+    remainingLeaves: 0,
+    totalAllocatedLeaves: 40,
   });
   const [leaveHistory, setLeaveHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,25 +26,12 @@ const EmployeeDashboard = () => {
   const navigate = useNavigate()
 
 
-
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-
-
-  useEffect(() => {
-    const fetchLeaveHistory = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const token = Cookies.get('access_token'); // Get the token from cookies
-        const response = await api.get('api/leave-history/', {
-          headers: {
-            Authorization: `Bearer ${token}`, // Include the token in the headers
-          },
-        });
-        console.log(response.data)
-        setLeaveHistory(response.data);
-        console.log('cheking how data is stored',LeaveHistory)
+        const response = await api.get('api/dashboard/datas/');
+        setLeaveHistory(response.data.leave_history);
+        setStats(response.data.stats);
       } catch (error) {
         console.error('Error fetching leave history:', error);
         toast.error('Failed to fetch leave history.');
@@ -52,28 +40,8 @@ const EmployeeDashboard = () => {
       }
     };
 
-    fetchLeaveHistory();
+    fetchDashboardData();
   }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      // Simulate API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setStats({
-        totalLeaves: 20,
-        pendingLeaves: 2,
-        approvedLeaves: 15,
-        rejectedLeaves: 3,
-        remainingLeaves: 10
-      });
-
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      setLoading(false);
-    }
-  };
 
 
   if (loading) {
@@ -100,7 +68,7 @@ const EmployeeDashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard
-            title="Total Leaves"
+            title="Total Leaves Applied"
             value={stats.totalLeaves}
             icon={<FaCalendarAlt />}
             color="blue"
@@ -116,6 +84,18 @@ const EmployeeDashboard = () => {
             value={stats.rejectedLeaves}
             icon={<FaTimesCircle />}
             color="red"
+          />
+            <StatCard
+            title="Pending"
+            value={stats.pendingLeaves}
+            icon={<FaClock />} 
+            color="yellow" 
+          />
+          <StatCard
+            title="Remaining Leaves"
+            value={stats.remainingLeaves} // Display remaining leaves
+            icon={<FaCalendarAlt />} // You can use the same icon or a different one
+            color="purple" // Choose a color that fits your design
           />
 
         </div>
@@ -145,13 +125,14 @@ const EmployeeDashboard = () => {
                 <tbody className="divide-y divide-gray-700">
                   {loading ? (
                     <tr>
-                      <td colSpan="3">Loading...</td>
+                      <td colSpan="3" className="text-center text-gray-300">Loading...</td>
                     </tr>
                   ) : leaveHistory.length === 0 ? (
                     <tr>
-                      <div className="text-center text-gray-300 mt-4">
-                        <p className="text-lg text-center">No leave history found.</p>
-                      </div>
+                      <td colSpan="3" className="text-center text-gray-300 py-4">
+                        <p className="text-lg">No leave history found.</p>
+                        <p className="text-sm">It looks like you haven't taken any leave yet.</p>
+                      </td>
                     </tr>
                   ) : (
                     leaveHistory.map((leave) => {
