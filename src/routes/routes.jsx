@@ -10,6 +10,7 @@ import LeaveHistory from "../components/leave/EmpLeaveHistory";
 import CreateEmployee from "../pages/ManagerPages/CreateEmployee";
 import LeaveRequests from "../pages/ManagerPages/LeaveRequests";
 import AllEmployees from "../pages/ManagerPages/AllEmployees";
+import ManagerSignUp from "../components/auth/ManagerSigin";
 
 const ProtectedRoute = ({ element }) => {
     const { user} = useAuth()
@@ -27,6 +28,10 @@ const route = createBrowserRouter([
     {
         path:'/',
         element:<LandingPage/>,
+    },
+    {
+        path:'/manager/signup',
+        element:<ManagerSignUp/>,
     },
     {
         path:'/login',
