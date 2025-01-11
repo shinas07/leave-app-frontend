@@ -13,7 +13,7 @@ const AllEmployees = () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await api.get('/api/employees/'); // Adjust the endpoint as needed
+        const response = await api.get('/api/employees/');
         setEmployees(response.data);
       } catch (error) {
         toast.error('Failed to fetch employees. Please try again later.');
@@ -25,11 +25,11 @@ const AllEmployees = () => {
     fetchEmployees();
   }, []);
 
-  const filteredEmployees = employees.filter(employee => {
-    const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredEmployees = employees?.filter(employee => {
+    const matchesSearch = employee.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || employee.user_type === filterStatus;
     return matchesSearch && matchesStatus;
-  });
+  }) || [];
 
   if (loading) {
     return (
@@ -65,7 +65,7 @@ const AllEmployees = () => {
                        focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
             />
           </div>
-          <select
+          {/* <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2
@@ -75,7 +75,7 @@ const AllEmployees = () => {
             <option value="all">All Status</option>
             <option value="employee">Employee</option>
             <option value="manager">Manager</option>
-          </select>
+          </select> */}
         </div>
 
         {/* Employees Table */}
@@ -93,9 +93,9 @@ const AllEmployees = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     User Type
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
-                  </th>
+                  </th> */}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -103,7 +103,7 @@ const AllEmployees = () => {
                   <tr key={employee.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {employee.name}
+                        {employee.username}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -115,10 +115,9 @@ const AllEmployees = () => {
                         {employee.user_type.charAt(0).toUpperCase() + employee.user_type.slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="text-blue-600 hover:text-blue-800">Edit</button>
-                      <button className="ml-2 text-red-600 hover:text-red-800">Delete</button>
-                    </td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <button className="ml-2 text-red-600 hover:text-red-800">Block</button>
+                    </td> */}
                   </tr>
                 ))}
               </tbody>
