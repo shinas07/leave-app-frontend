@@ -1,60 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Calendar,
   Users,
   Clock,
   Check,
-  X,
   AlertCircle,
-  ChevronDown,
   Search,
-  Filter,
-  Download
 } from 'lucide-react';
 import ManagerSidebar from './ManagerTopBar';
-
+import api from '../../service/api';
+import { toast } from 'sonner';
 
 const ManagerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  
-  // Mock data
-  const stats = {
-    totalRequests: 25,
-    pendingRequests: 5,
-    approvedRequests: 15,
-    rejectedRequests: 5,
-    totalEmployees: 10
+  const [stats, setStats] = useState({
+    totalEmployees: 0,
+    pendingRequests: 0,
+    approvedRequests: 0,
+    rejectedRequests: 0
+  });
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [statsResponse, requestsResponse] = await Promise.all([
+          api.get('/api/dashboard/stats/'),
+          api.get('/api/dashboard/requests/')
+        ]);
+        setStats(statsResponse.data);
+        setLeaveRequests(requestsResponse.data);
+      } catch (error) {
+        toast.error('Failed to fetch dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
-  const leaveRequests = [
-    {
-      id: 1,
-      employeeName: 'John Doe',
-      department: 'Engineering',
-      leaveType: 'Annual Leave',
-      startDate: '2024-03-20',
-      endDate: '2024-03-22',
-      status: 'pending',
-      reason: 'Family vacation',
-      avatar: '/api/placeholder/32/32'
-    },
-    {
-      id: 2,
-      employeeName: 'Jane Smith',
-      department: 'Marketing',
-      leaveType: 'Sick Leave',
-      startDate: '2024-03-25',
-      endDate: '2024-03-26',
-      status: 'approved',
-      reason: 'Medical appointment',
-      avatar: '/api/placeholder/32/32'
-    }
-  ];
+  const filteredRequests = leaveRequests.filter(request => {
+    const matchesSearch = 
+      request.user_full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.leave_type?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
-
-
-  const StatCard = ({ icon: Icon, label, value, trend, color }) => (
+  const StatCard = ({ icon: Icon, label, value, color }) => (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between">
         <div className={`p-3 rounded-xl bg-${color}-100 dark:bg-${color}-900/30`}>
@@ -64,41 +67,27 @@ const ManagerDashboard = () => {
       <div className="mt-4">
         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</h3>
         <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
-        {trend && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-            <span className={`text-${trend > 0 ? 'green' : 'red'}-500`}>
-              {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}%
-            </span>
-            {' '}vs last month
-          </p>
-        )}
       </div>
     </div>
   );
 
-  const ProgressBar = ({ used, total, color }) => (
-    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-      <div 
-        className={`bg-${color}-500 h-2.5 rounded-full`}
-        style={{ width: `${(used / total) * 100}%` }}
-      />
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-   
-    <ManagerSidebar/>
-      {/* Main Content */}
+      <ManagerSidebar/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             icon={Users}
             label="Total Employees"
             value={stats.totalEmployees}
-
             color="blue"
           />
           <StatCard
@@ -121,8 +110,6 @@ const ManagerDashboard = () => {
           />
         </div>
 
-
-        {/* Leave Requests Table */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -137,17 +124,13 @@ const ManagerDashboard = () => {
                     placeholder="Search requests..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 
-                             rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                             focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
@@ -162,48 +145,54 @@ const ManagerDashboard = () => {
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Employee
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Department
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Leave Type
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Duration
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Reason
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Status
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {leaveRequests.map((request) => (
+                {filteredRequests.map((request) => (
                   <tr key={request.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <img className="h-8 w-8 rounded-full" src={request.avatar} alt="" />
-                        <div className="ml-4">
+                        <div>
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {request.employeeName}
+                            {request.user_full_name || request.user_email}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {request.user_email}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">{request.department}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">{request.leaveType}</div>
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {request.leave_type}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-white">
-                        {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+                        {formatDate(request.start_date)} - {formatDate(request.end_date)}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {request.duration} day{request.duration !== 1 ? 's' : ''}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 dark:text-white max-w-xs truncate">
+                        {request.reason}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -213,24 +202,6 @@ const ManagerDashboard = () => {
                         ${request.status === 'rejected' ? 'bg-red-100 text-red-800' : ''}`}>
                         {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.status === 'pending' && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleLeaveAction(request.id, 'approve')}
-                            className="btn-success"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleLeaveAction(request.id, 'reject')}
-                            className="btn-danger"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
                     </td>
                   </tr>
                 ))}
