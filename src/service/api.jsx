@@ -1,30 +1,32 @@
 import axios from "axios";
 import toast from "react-hot-toast";
-// import { logout } from "../redux/authSlice";
-
-const BASE_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:8000/';
+import { decryptToken, encryptToken } from '../utils/tokenUtils';
+const BASE_URL = import.meta.env.VITE_APP_API_URL || 'http://localhost:8000/';
 
 const api = axios.create({
-    baseURL:BASE_URL,
+    baseURL: BASE_URL,
     withCredentials: true,
 });
 
+
+
 // Utility function to check if token is expired
-const isTokenExpired = (token) => {
-    if (!token) return true;
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.exp * 1000 < Date.now();
-    } catch (e) {
-        return true;
-    }
-};
+// const isTokenExpired = (token) => {
+//     if (!token) return true;
+//     try {
+//         const payload = JSON.parse(atob(token.split('.')[1]));
+//         return payload.exp * 1000 < Date.now();
+//     } catch (e) {
+//         return true;
+//     }
+// };
 
 // Add token to every request
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('accessToken');
-        if (token && !isTokenExpired(token)) {
+        const encryptedToken = localStorage.getItem('access_token');
+        if (encryptedToken) {
+            const token = decryptToken(encryptedToken);
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -35,76 +37,74 @@ api.interceptors.request.use(
 );
 
 const refreshAccessToken = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken || isTokenExpired(refreshToken)) {
-        throw new Error('No valid refresh token available');
+    const encryptedRefreshToken = localStorage.getItem('refresh_token');
+    
+    if (!encryptedRefreshToken) {
+        throw new Error('No refresh token available');
     }
     
-    // Create a new axios instance for refresh requests to avoid interceptors
-    const refreshApi = axios.create({
-        baseURL: import.meta.env.VITE_API_BASE_URL,
-        withCredentials: true,
-    });
-    
     try {
-        const response = await refreshApi.post('/user/refresh-token/', {
-            refresh: refreshToken
+        // Decrypt the refresh token before sending to the server
+        const decryptedRefreshToken = decryptToken(encryptedRefreshToken);
+        
+        // Use a separate axios instance to avoid interceptors loop
+        const response = await axios.post(`${BASE_URL}auth/refresh/`, {
+            refresh: decryptedRefreshToken
+        }, {
+            withCredentials: true
         });
         
         if (response.data.access) {
-            localStorage.setItem('accessToken', response.data.access);
-            return response.data.access;
-        } else {
-            throw new Error('No access token received');
+            // Encrypt the new access token before storing
+            const encryptedAccessToken = encryptToken(response.data.access);
+            localStorage.setItem('access_token', encryptedAccessToken);
+            
+            // Encrypt the new refresh token if provided
+            if (response.data.refresh) {
+                const encryptedNewRefreshToken = encryptToken(response.data.refresh);
+                localStorage.setItem('refresh_token', encryptedNewRefreshToken);
+            }
+            
+            return response.data.access; // Return decrypted access token for immediate use
         }
+        throw new Error('No access token received');
     } catch (error) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         throw error;
     }
 };
 
-let refreshPromise = null;
-
-// api.interceptors.response.use(
-//     response => response,
-//     async (error) => {
-//         const originalRequest = error.config;
+// Simplified response interceptor
+api.interceptors.response.use(
+    response => response,
+    async (error) => {
+        const originalRequest = error.config;
         
-//         if (error.response?.status === 401 && !originalRequest._retry) {
-//             originalRequest._retry = true;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
             
-//             try {
-//                 // Use existing refresh promise if one is in progress
-//                 if (!refreshPromise) {
-//                     refreshPromise = refreshAccessToken();
-//                 }
+            try {
+                const newAccessToken = await refreshAccessToken();
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                return api(originalRequest);
+            } catch (refreshError) {
+                // Clear tokens and redirect to login
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
                 
-//                 const newAccessToken = await refreshPromise;
-//                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                toast.error('Session expired. Please log in again.');
                 
-//                 return api(originalRequest);
-//             } catch (refreshError) {
-//                 // Clear the refresh promise
-//                 refreshPromise = null;
+                if (window.location.pathname !== '/') {
+                    window.location.href = '/';
+                }
                 
-//                 // Handle authentication failure
-//                 // store.dispatch(logout());
-//                 toast.error('Session expired. Please log in again.');
-                
-//                 // Redirect to login
-//                 if (window.location.pathname !== '/') {
-//                     window.location.href = '/';
-//                 }
-                
-//                 return Promise.reject(refreshError);
-//             } finally {
-//                 refreshPromise = null;
-//             }
-//         }
+                return Promise.reject(refreshError);
+            }
+        }
         
-//         return Promise.reject(error);
-//     }
-// );
+        return Promise.reject(error);
+    }
+);
 
 export default api;
