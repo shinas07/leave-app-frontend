@@ -7,7 +7,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import Sidebar from '../../pages/EmployeePages/sidebar';
 import api from '../../service/api';
 import { toast } from 'sonner';
-import Cookies from 'js-cookie';
 
 const LeaveApplicationForm = () => {
   const navigate = useNavigate();
@@ -67,6 +66,16 @@ const LeaveApplicationForm = () => {
     }
   }, [watch('startDate'), watch('endDate')]);
 
+  const validateReason = (value) => {
+    if (!value.trim()) {
+      return 'Reason cannot be empty or just whitespace.';
+    }
+    if (value.length < 10) {
+      return 'Reason must be at least 10 characters.';
+    }
+    return true; // Return true if validation passes
+  };
+
   const onSubmit = async (data) => {
     setLoading(true);
     try {
@@ -78,24 +87,26 @@ const LeaveApplicationForm = () => {
         duration: duration
       };
 
-      const token = Cookies.get('access_token');
-
       // Make the API call with the Authorization header
-      const response = await api.post('api/apply-leave/', payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.post('api/apply-leave/', payload,);
   
 
-      if (response.status === 200) {
+      if (response.status === 201) {
         toast.success('Leave application submitted successfully!');
+        navigate('/employee/leave-history')
       } else {
-        toast.error('Failed to submit leave application. Please try again.');
+        // Handle error response from the backend
+        const errorMessage = response.data.error || 'Failed to submit leave application. Please try again.';
+        toast.error(errorMessage);
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('An error occurred while submitting the leave application.');
+      console.error('Error:',);      
+      // Check if the error response has a message
+      if (error.response && error.response.data && error.response.data.error) {
+        toast.info(error.response.data.error); // Show the error message from the backend
+      } else {
+        toast.error('An error occurred while submitting the leave application.');
+      }
     } finally {
       setLoading(false);
     }
@@ -198,7 +209,7 @@ const LeaveApplicationForm = () => {
               <textarea
                 {...register('reason', { 
                   required: 'Reason is required',
-                  minLength: { value: 10, message: 'Reason must be at least 10 characters' }
+                  validate: validateReason
                 })}
                 rows={4}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg
