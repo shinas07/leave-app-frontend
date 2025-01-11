@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 const Login = () => {
   const navigate = useNavigate();
   const { user, loading, login} = useAuth()
+ 
 
   const [selectedRole, setSelectedRole] = useState('employee');
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ const Login = () => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const isManager = selectedRole === 'manager';
 
 
   useEffect(() => {
@@ -45,6 +47,11 @@ const handleSubmit = async (e) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleManagerSignUp = () => {
+    // Navigate to the manager sign-up page
+    navigate('/manager/signup'); // Update with your actual route for manager sign-up
   };
 
   return (
@@ -186,6 +193,19 @@ const handleSubmit = async (e) => {
                   'Sign in'
                 )}
               </button>
+                {/* Conditionally render manager sign-up link */}
+        {isManager && (
+          <div className="mt-4 text-center">
+            <span className="text-sm text-gray-400">Don't have an account? </span>
+            <button
+              onClick={handleManagerSignUp}
+              className="text-blue-500 hover:underline"
+            >
+              Sign up as Manager
+            </button>
+          </div>
+        )}
+
             </form>
           </div>
           <div className="mt-4 text-center">
