@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useDebugValue } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell,
@@ -18,22 +18,21 @@ import {
   X,
   User
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'sonner';
 
 const Sidebar = ({ children }) => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'New leave request', time: '5m ago' },
-    { id: 2, title: 'Team meeting', time: '1h ago' },
-    { id: 3, title: 'Report due', time: '2h ago' }
-  ]);
   
-  const userRole = localStorage.getItem('userRole') || 'employee';
-  const userName = localStorage.getItem('userName') || 'John Doe';
-  const userEmail = localStorage.getItem('userEmail') || 'john@example.com';
+  const userData = JSON.parse(localStorage.getItem('user')) || {};
+  console.log(userData)
+  const userRole = userData.user_type || 'employee';
+  const userEmail = userData || 'employee@example.com';
+  const userName = userEmail.split('@')[0] || 'Employee '; //
 
   const navigationItems = {
     employee: [
@@ -42,15 +41,17 @@ const Sidebar = ({ children }) => {
       { path: '/employee/leave-history', name: 'Leave History', icon: Clock },
 
     ],
-    manager: [
-      { path: 'manager/dashboard', name: 'Dashboard', icon: Home },
-      { path: '/requests', name: 'Leave Requests', icon: Clock, badge: notifications.length },
-      { path: '/employees', name: 'Team Members', icon: Users },
-      { path: '/reports', name: 'Analytics', icon: BarChart3 },
-    ]
   };
 
-
+  const handleLogout = async () => {
+    const result = await logout();
+    if (result.success) {
+      toast.success('Logout successfully.');
+      navigate('/login'); 
+    } else {
+      toast.error('Logout failed.');
+    }
+  };
 
   return (
     <div className={`flex min-h-screen ${isDarkMode ? 'dark' : ''}`}>
@@ -69,8 +70,7 @@ const Sidebar = ({ children }) => {
         initial={{ width: isExpanded ? 240 : 80 }}
         animate={{ width: isExpanded ? 240 : 80 }}
         transition={{ type: "spring", damping: 20, stiffness: 200 }}
-        className={`
-          fixed lg:static inset-y-0 left-0 z-40
+        className={`fixed lg:static inset-y-0 left-0 z-40
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 transition-transform
           bg-white dark:bg-gray-900
@@ -194,20 +194,16 @@ const Sidebar = ({ children }) => {
           </div>
 
           <div className="mt-4 flex items-center gap-2">
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                localStorage.clear();
-                navigate('/login');
-              }}
-              className="flex items-center gap-2 p-2 rounded-lg text-red-500 
-                       hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              {isExpanded && <span className="text-sm font-medium">Logout</span>}
-            </motion.button>
+            <div className="mt-4">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center gap-2 p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+              >
+                <LogOut className="w-5 h-5" />
+                {isExpanded && <span>Logout</span>}
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.div>
