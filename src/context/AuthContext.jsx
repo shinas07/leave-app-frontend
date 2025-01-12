@@ -35,7 +35,8 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('auth/login/', { email, password, userType });
       if (response.status === 200) {
         const { access, refresh } = response.data.tokens;
-        const userEmail = response.data.user.email;
+        const user = response.data.user;
+        console.log(user)
 
         // Encrypt tokens before storing
         const encryptedAccess = encryptToken(access);
@@ -43,14 +44,14 @@ export const AuthProvider = ({ children }) => {
 
         localStorage.setItem('access_token', encryptedAccess); // Store access token in localStorage
         localStorage.setItem('refresh_token', encryptedRefresh);
-        localStorage.setItem('user', JSON.stringify(userEmail));
-        setUser(userEmail);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
         return { success: true };
       }
       return { success: false, error: response.data.error };
     } catch (error) {
       console.log(error);
-      return { success: false, error: error.response?.data?.error || 'Login failed' };
+      return { success: false, error: 'Login failed' };
     }
   };
 
