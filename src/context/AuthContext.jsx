@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }) => {
       if (response.status === 200) {
         const { access, refresh } = response.data.tokens;
         const user = response.data.user;
-        console.log(user)
 
         // Encrypt tokens before storing
         const encryptedAccess = encryptToken(access);
