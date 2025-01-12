@@ -29,10 +29,9 @@ const Sidebar = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   
   const userData = JSON.parse(localStorage.getItem('user')) || {};
-  console.log(userData)
   const userRole = userData.user_type || 'employee';
-  const userEmail = userData || 'employee@example.com';
-  const userName = userEmail.split('@')[0] || 'Employee '; //
+  const userEmail = userData.email || 'employee@example.com';
+  const userName = userEmail ? userEmail.split('@')[0] : 'Employee';
 
   const navigationItems = {
     employee: [
