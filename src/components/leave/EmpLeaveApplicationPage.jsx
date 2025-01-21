@@ -32,29 +32,37 @@ const LeaveApplicationForm = () => {
 
   const isWeekend = (date) => {
     const day = date.getDay();
-    return day === 0 || day === 6;
+    return day === 0; // Only Sunday is considered weekend for leave calculation
   };
-
+  
   const isHoliday = (date) => {
     return holidays.some(holiday => 
       new Date(holiday.date).toDateString() === date.toDateString()
     );
   };
-
-  const calculateWorkingDays = (startDate, endDate) => {
+  
+  const calculateWorkingDays = (start, end) => {
+    if (!start || !end) return 0;
+      
     let workDays = 0;
-    let currentDate = new Date(startDate);
-    
+    const currentDate = new Date(start);
+    const endDate = new Date(end);
+      
+    // Set both dates to midnight to ensure proper date comparison
+    currentDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+      
+    // Include both start and end dates in the calculation
     while (currentDate <= endDate) {
+      // Only count as workday if it's not a Sunday and not a holiday
       if (!isWeekend(currentDate) && !isHoliday(currentDate)) {
         workDays++;
       }
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    
+      
     return workDays;
   };
-
   // Dynamically calculate the duration when startDate or endDate changes
   useEffect(() => {
     const startDate = watch('startDate');
@@ -76,41 +84,91 @@ const LeaveApplicationForm = () => {
     return true; // Return true if validation passes
   };
 
+
+  const formatDateToISO = (date) => {
+    if (!date) return null;
+    // Create a new date object using the local date values
+    const localDate = new Date(date);
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    
+    // Return in YYYY-MM-DD format
+    return `${year}-${month}-${day}`;
+  };
+
   const onSubmit = async (data) => {
     setLoading(true);
     try {
+      // Get the selected dates from the form data
+      const startDate = data.startDate;
+      const endDate = data.endDate;
+
+      // Create the payload with properly formatted dates
       const payload = {
         leave_type: data.leaveType,
         reason: data.reason,
-        start_date: data.startDate.toISOString().split('T')[0],
-        end_date: data.endDate.toISOString().split('T')[0],
+        start_date: formatDateToISO(startDate),
+        end_date: formatDateToISO(endDate),
         duration: duration
       };
 
-      // Make the API call with the Authorization header
-      const response = await api.post('api/apply-leave/', payload,);
-  
+
+      // Make the API call
+      const response = await api.post('api/apply-leave/', payload);
 
       if (response.status === 201) {
         toast.success('Leave application submitted successfully!');
-        navigate('/employee/leave-history')
+        navigate('/employee/leave-history');
       } else {
-        // Handle error response from the backend
-        const errorMessage = response.data.error || 'Failed to submit leave application. Please try again.';
+        const errorMessage = response.data?.error || 'Failed to submit leave application. Please try again.';
         toast.error(errorMessage);
       }
     } catch (error) {
-      console.error('Error:',);      
-      // Check if the error response has a message
-      if (error.response && error.response.data && error.response.data.error) {
-        toast.info(error.response.data.error); // Show the error message from the backend
-      } else {
-        toast.error('An error occurred while submitting the leave application.');
-      }
+      const errorMessage = error.response?.data?.error || 'An error occurred while submitting the leave application.';
+      toast.info(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
+  
+  // const onSubmit = async (data) => {
+  //   setLoading(true);
+
+    
+  //   try {
+  //     const payload = {
+  //       leave_type: data.leaveType,
+  //       reason: data.reason,
+  //       start_date: data.startDate.toISOString().split('T')[0],
+  //       end_date: data.endDate.toISOString().split('T')[0],
+  //       duration: duration
+  //     };
+  //     console.log(payload)
+  //     // Make the API call with the Authorization header
+  //     // const response = await api.post('api/apply-leave/', payload,);
+  
+
+  //     if (response.status === 201) {
+  //       toast.success('Leave application submitted successfully!');
+  //       navigate('/employee/leave-history')
+  //     } else {
+  //       // Handle error response from the backend
+  //       const errorMessage = response.data.error || 'Failed to submit leave application. Please try again.';
+  //       toast.error(errorMessage);
+  //     }
+  //   } catch (error) {
+  //     // Check if the error response has a message
+  //     if (error.response && error.response.data && error.response.data.error) {
+  //       toast.info(error.response.data.error); // Show the error message from the backend
+  //     } else {
+  //       toast.error('An error occurred while submitting the leave application.');
+  //     }
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <Sidebar>
