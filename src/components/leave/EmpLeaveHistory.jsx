@@ -57,8 +57,8 @@ const LeaveHistory = () => {
                 {leaveHistory.map((leave) => (
                   <tr key={leave.id} className="hover:bg-gray-600">
                     <td className="border px-4 py-2 text-white bg-gray-700">{leave.leave_type}</td>
-                    <td className="border px-4 py-2 text-white bg-gray-700">{new Date(leave.start_date).toLocaleDateString()}</td>
-                    <td className="border px-4 py-2 text-white bg-gray-700">{new Date(leave.end_date).toLocaleDateString()}</td>
+                    <td className="border px-4 py-2 text-white bg-gray-700">{new Date(leave.start_date).toLocaleDateString('en-GB')}</td>
+                    <td className="border px-4 py-2 text-white bg-gray-700">{new Date(leave.end_date).toLocaleDateString('en-GB')}</td>
                     <td className="border px-4 py-2 text-white bg-gray-700">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusClass(leave.status)}`}>
                         {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
