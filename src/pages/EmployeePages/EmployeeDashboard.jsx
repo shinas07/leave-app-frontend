@@ -18,6 +18,8 @@ const EmployeeDashboard = () => {
     rejectedLeaves: 0,
     remainingLeaves: 0,
     totalAllocatedLeaves: 40,
+    usedLeaves: 0,
+    year: 0,
   });
   const [leaveHistory, setLeaveHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ const EmployeeDashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard
-            title="Total Leaves Applied"
+            title="Total Leaves Approved"
             value={stats.totalLeaves}
             icon={<FaCalendarAlt />}
             color="blue"
@@ -144,7 +146,7 @@ const EmployeeDashboard = () => {
                             {leave.leave_type}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-gray-300">
-                            {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+                            {startDate.toLocaleDateString('en-GB')} - {endDate.toLocaleDateString('en-GB')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <StatusBadge status={leave.status} />
@@ -169,7 +171,7 @@ const StatCard = ({ title, value, icon, color }) => {
     blue: 'bg-blue-500',
     yellow: 'bg-yellow-500',
     green: 'bg-green-500',
-    red: 'bg-red-500',
+    orange: 'bg-orange-500',
     purple: 'bg-purple-500'
   };
 
