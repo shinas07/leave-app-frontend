@@ -206,6 +206,14 @@ const handleSubmit = async (e) => {
           </div>
         )}
 
+            {/* Employee-created text */}
+            {selectedRole === 'employee' && (
+          <div className="mt-4 text-center text-gray-400">
+            <p className="text-sm">Employee created by Manager</p>
+          </div>
+        )}
+
+
             </form>
           </div>
           <div className="mt-4 text-center">
