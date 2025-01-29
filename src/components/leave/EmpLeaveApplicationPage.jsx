@@ -265,19 +265,20 @@ const LeaveApplicationForm = () => {
                 Reason for Leave
               </label>
               <textarea
-                {...register('reason', { 
-                  required: 'Reason is required',
-                  validate: validateReason
-                })}
-                rows={4}
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg
-                         text-white focus:outline-none focus:ring-2 focus:ring-blue-500
-                         transition-colors resize-none"
-                placeholder="Please provide a detailed reason for your leave request..."
-              />
-              {errors.reason && (
-                <p className="mt-1 text-sm text-red-500">{errors.reason.message}</p>
-              )}
+            {...register('reason', {
+              required: 'Reason is required',
+              minLength: { value: 10, message: 'At least 10 characters required' },
+              maxLength: { value: 150, message: 'Maximum 150 characters allowed' }
+            })}
+            className="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg
+                      text-white focus:outline-none focus:ring-2 focus:ring-blue-500
+                      transition-colors"
+            placeholder="Enter a short reason (max 150 characters)"
+          />
+          {errors.reason && (
+            <p className="mt-1 text-sm text-red-500">{errors.reason.message}</p>
+          )}
+
             </div>
 
             {/* Action Buttons */}
