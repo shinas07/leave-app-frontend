@@ -119,7 +119,7 @@ const LeaveRequests = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900 dark:text-white max-w-xs overflow-hidden">
-                        {request.reason}
+                        {request.reason.substring(0,300)}
                       </div>
                     </td>
                     <td className="px-6 py-4">
